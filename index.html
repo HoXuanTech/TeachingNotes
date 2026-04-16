@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>講義下載</title>
+    <title>物理科教學講義</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -11,16 +11,47 @@
 
     <style>
         :root { --primary: #2c3e50; --bg: #f4f7f6; }
-        
-        /* 網頁顯示樣式 */
-        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
-        #editor-side, #preview-side { flex: 1; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+
+        /* 網頁顯示模式樣式 */
+        body { 
+            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
+            margin: 0; 
+            display: flex; 
+            height: 100vh; 
+            background: var(--bg); 
+            overflow: hidden;
+        }
+
+        #editor-side, #preview-side { 
+            flex: 1; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 20px; 
+            box-sizing: border-box; 
+        }
+
         #editor-side { border-right: 1px solid #ccc; background: #fff; }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        h2 { margin: 0; font-size: 1.1rem; color: var(--primary); }
-        textarea { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; outline: none; font-family: monospace; }
         
-        /* 預覽區樣式 */
+        header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 15px; 
+        }
+
+        h2 { margin: 0; font-size: 1.1rem; color: var(--primary); }
+
+        textarea { 
+            flex: 1; 
+            padding: 15px; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 15px; 
+            line-height: 1.6; 
+            outline: none; 
+            font-family: monospace; 
+        }
+
         #preview { 
             flex: 1; 
             padding: 40px; 
@@ -28,35 +59,73 @@
             border-radius: 8px; 
             box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
             overflow-y: auto; 
-            line-height: 1.8; 
-            font-size: 1.1rem; 
+            line-height: 2; 
+            font-size: 1.15rem; 
             color: #333; 
         }
 
-        button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button { 
+            padding: 10px 20px; 
+            background: var(--primary); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
 
-        /* 🔥 關鍵：專業 PDF 列印優化 */
+        /* 📄 專業 PDF 列印優化 (核心修正) */
         @media print {
-            /* 隱藏所有工具介面 */
-            #editor-side, header, button, .no-print { display: none !important; }
-            
-            /* 重置佈局以利跨頁 */
-            body, html { background: white; height: auto !important; overflow: visible !important; }
-            #preview-side { width: 100%; padding: 0 !important; display: block !important; }
+            /* 1. 徹底摧毀網頁佈局，回歸傳統文件流 */
+            body, html { 
+                height: auto !important; 
+                overflow: visible !important; 
+                display: block !important; 
+                background: white !important; 
+            }
+
+            /* 2. 隱藏編輯器與所有工具欄 */
+            #editor-side, header, button, .no-print { 
+                display: none !important; 
+            }
+
+            /* 3. 讓預覽區成為唯一的列印對象 */
+            #preview-side { 
+                display: block !important; 
+                width: 100% !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+            }
+
             #preview { 
                 box-shadow: none !important; 
                 padding: 0 !important; 
                 margin: 0 !important; 
+                height: auto !important; 
                 overflow: visible !important; 
                 display: block !important; 
-                height: auto !important; 
                 font-size: 12pt; 
+                line-height: 1.8;
                 color: black; 
             }
-            
-            /* 調整標題顏色與間距 */
-            h1, h2, h3 { color: black !important; page-break-after: avoid; }
-            p, li { page-break-inside: avoid; }
+
+            /* 4. 強制處理分頁，避免標題出現在頁面底部 */
+            h1, h2, h3 { 
+                color: black !important; 
+                page-break-after: avoid; 
+                margin-top: 1.5em;
+            }
+
+            p, li { 
+                page-break-inside: avoid; 
+                margin-bottom: 0.8em;
+            }
+
+            /* 隱藏瀏覽器預設生成的網址頁碼 */
+            @page {
+                size: auto;
+                margin: 2cm 1.5cm;
+            }
         }
     </style>
 </head>
@@ -65,13 +134,13 @@
     <div id="editor-side">
         <header>
             <h2>📝 內容編輯</h2>
-            <button onclick="window.print()">📥 匯出專業講義 PDF</button>
+            <button onclick="window.print()">📤 下載專業講義 PDF</button>
         </header>
-        <textarea id="input" placeholder="直接貼上 AI 回覆的全文..."></textarea>
+        <textarea id="input" placeholder="貼上 AI 回覆的全文..."></textarea>
     </div>
 
     <div id="preview-side">
-        <header><h2>📄 專業預覽</h2></header>
+        <header class="no-print"><h2>📄 講義預覽</h2></header>
         <div id="preview"></div>
     </div>
 
@@ -80,27 +149,30 @@
         const preview = document.getElementById('preview');
 
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+            tex: { 
+                inlineMath: [['$', '$'], ['\\(', '\\)']], 
+                displayMath: [['$$', '$$']] 
+            }
         };
 
         function render() {
             let text = input.value;
             
-            // 暴力過濾所有引用標籤
+            // 1. 暴力清洗所有 標籤與 
             text = text.replace(/\[cite.*?\]/g, "");
 
-            // 1. 渲染內容
+            // 2. 渲染 Markdown
             preview.innerHTML = marked.parse(text);
 
-            // 2. 動態將第一行標題同步到文件名稱，PDF 頁首會變專業
-            const firstHeading = text.match(/^# (.*)/m);
-            if (firstHeading) {
-                document.title = firstHeading[1].trim();
+            // 3. 自動提取講義第一行標題，作為瀏覽器文件標籤 (PDF 頁首會顯示此標題)
+            const titleMatch = text.match(/^# (.*)/m);
+            if (titleMatch) {
+                document.title = titleMatch[1].trim();
             } else {
                 document.title = "物理科教學講義";
             }
 
-            // 3. 渲染公式
+            // 4. 重新觸發 MathJax 渲染公式
             if (window.MathJax && window.MathJax.typesetPromise) {
                 window.MathJax.typesetPromise([preview]);
             }
@@ -108,8 +180,8 @@
 
         input.addEventListener('input', render);
 
-        // 預設內容
-        input.value = `# 國立中興大學物理筆試：歷年核心題型總結\n---\n## 一、力學 (Mechanics)\n當物體運動時，$v-t$ 圖與 $x-t$ 圖是核心重點。\n$$ F = ma $$\n\n* **牛頓定律**：力圖分析、連接體問題。`;
+        // 初始化示範內容
+        input.value = `# 國立中興大學物理筆試分析 (111-114)\n---\n## 一、力學的核心概念\n物體在等加速度 $a$ 下運動的位移公式：\n$$ \\Delta x = v_0 t + \\frac{1}{2} a t^2 $$\n\n* **牛頓第二定律**：$F = ma$\n* **功與能**：$W = \\int \\vec{F} \\cdot d\\vec{x}$`;
         render();
     </script>
 </body>
