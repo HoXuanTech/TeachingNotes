@@ -11,12 +11,12 @@
 
     <style>
         :root { --primary: #2c3e50; --bg: #f4f7f6; }
-        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        body { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
         #editor-side, #preview-side { flex: 1; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         #editor-side { border-right: 1px solid #ccc; background: #fff; }
         header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         h2 { margin: 0; font-size: 1.1rem; color: var(--primary); }
-        textarea { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; outline: none; }
+        textarea { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; outline: none; font-family: monospace; }
         #preview { flex: 1; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-y: auto; line-height: 1.8; font-size: 1.1rem; color: #333; }
         button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         button:hover { opacity: 0.9; }
@@ -35,14 +35,14 @@
 
     <div id="editor-side">
         <header>
-            <h2>📝 內容編輯</h2>
-            <button onclick="window.print()">📥 產生 PDF 講義</button>
+            <h2>📝 內容編輯 (Markdown + LaTeX)</h2>
+            <button onclick="window.print()">📥 下載 PDF 講義</button>
         </header>
         <textarea id="input" placeholder="直接貼上 AI 回覆的全文..."></textarea>
     </div>
 
     <div id="preview-side">
-        <header><h2>📄 預覽 (已過濾標籤與亂碼)</h2></header>
+        <header><h2>📄 講義預覽 (已過濾引用標籤)</h2></header>
         <div id="preview"></div>
     </div>
 
@@ -50,30 +50,36 @@
         const input = document.getElementById('input');
         const preview = document.getElementById('preview');
 
+        // 設定 MathJax 選項
         window.MathJax = {
-            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$']]
+            }
         };
 
         function render() {
-            let text = input.value;
+            let rawText = input.value;
             
-            // 【最強過濾邏輯】只要括號內包含 cite 字眼，整組標籤刪除
-            // 處理 或 
-            text = text.replace(/\[cite.*?\]/g, "");
+            // 【核心清洗邏輯】
+            // 只要括號內包含 cite 關鍵字，通通連同括號刪除
+            // 涵蓋,, 等所有變體
+            let cleanText = rawText.replace(/\[cite[:_][^\]]+\]/g, "");
 
-            // 渲染 Markdown
-            preview.innerHTML = marked.parse(text);
+            // 1. 將清洗後的文字轉為 HTML
+            preview.innerHTML = marked.parse(cleanText);
 
-            // 重新渲染 LaTeX 公式
+            // 2. 觸發 MathJax 渲染 LaTeX 公式
             if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise([preview]);
+                window.MathJax.typesetPromise([preview]).catch((err) => console.log(err));
             }
         }
 
+        // 監聽輸入即時渲染
         input.addEventListener('input', render);
 
-        // 初始化範例
-        input.value = `# 中興大學物理題型總結\n當物體受力為 $F$ 時，加速度 $a$ 與質量 $m$ 的關係：\n$$ F = ma $$\n* 直線運動：包含 $x-t$ 圖判讀。`;
+        // 初始測試
+        input.value = `# 國立中興大學物理筆試總結\n當物體運動時，$v-t$ 圖與 $x-t$ 圖是核心重點。\n$$ F = ma $$\n這是一個自動清洗後的示範。`;
         render();
     </script>
 </body>
