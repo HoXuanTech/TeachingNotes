@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>物理科教學講義</title>
+    <title>教學講義</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
@@ -74,9 +74,14 @@
             font-weight: bold; 
         }
 
-        /* 📄 專業 PDF 列印優化 (核心修正) */
+        /* 📄 專業 PDF 列印優化 (解決切斷與雜訊問題) */
         @media print {
-            /* 1. 徹底摧毀網頁佈局，回歸傳統文件流 */
+            /* 1. 隱藏編輯介面 */
+            #editor-side, header, button, .no-print { 
+                display: none !important; 
+            }
+
+            /* 2. 重置文件流，確保跨頁正常 */
             body, html { 
                 height: auto !important; 
                 overflow: visible !important; 
@@ -84,12 +89,6 @@
                 background: white !important; 
             }
 
-            /* 2. 隱藏編輯器與所有工具欄 */
-            #editor-side, header, button, .no-print { 
-                display: none !important; 
-            }
-
-            /* 3. 讓預覽區成為唯一的列印對象 */
             #preview-side { 
                 display: block !important; 
                 width: 100% !important; 
@@ -109,7 +108,7 @@
                 color: black; 
             }
 
-            /* 4. 強制處理分頁，避免標題出現在頁面底部 */
+            /* 3. 分頁與內容保護 */
             h1, h2, h3 { 
                 color: black !important; 
                 page-break-after: avoid; 
@@ -121,10 +120,10 @@
                 margin-bottom: 0.8em;
             }
 
-            /* 隱藏瀏覽器預設生成的網址頁碼 */
+            /* 4. 強制邊距以擠壓掉頁首頁尾資訊 */
             @page {
                 size: auto;
-                margin: 2cm 1.5cm;
+                margin: 20mm 15mm;
             }
         }
     </style>
@@ -134,13 +133,13 @@
     <div id="editor-side">
         <header>
             <h2>📝 內容編輯</h2>
-            <button onclick="window.print()">📤 下載專業講義 PDF</button>
+            <button onclick="generatePDF()">📥 下載專業講義 PDF</button>
         </header>
         <textarea id="input" placeholder="貼上 AI 回覆的全文..."></textarea>
     </div>
 
     <div id="preview-side">
-        <header class="no-print"><h2>📄 講義預覽</h2></header>
+        <header class="no-print"><h2>📄 專業預覽</h2></header>
         <div id="preview"></div>
     </div>
 
@@ -158,30 +157,31 @@
         function render() {
             let text = input.value;
             
-            // 1. 暴力清洗所有 標籤與 
+            // 核心清洗邏輯：移除所有 與 
             text = text.replace(/\[cite.*?\]/g, "");
 
-            // 2. 渲染 Markdown
+            // 渲染 Markdown
             preview.innerHTML = marked.parse(text);
 
-            // 3. 自動提取講義第一行標題，作為瀏覽器文件標籤 (PDF 頁首會顯示此標題)
-            const titleMatch = text.match(/^# (.*)/m);
-            if (titleMatch) {
-                document.title = titleMatch[1].trim();
-            } else {
-                document.title = "物理科教學講義";
-            }
-
-            // 4. 重新觸發 MathJax 渲染公式
+            // 重新觸發 MathJax
             if (window.MathJax && window.MathJax.typesetPromise) {
                 window.MathJax.typesetPromise([preview]);
             }
         }
 
+        function generatePDF() {
+            // 在列印前暫時清空標題，防止 PDF 頁首出現網頁名稱
+            const originalTitle = document.title;
+            document.title = " "; 
+            window.print();
+            // 列印完畢後恢復標題
+            document.title = originalTitle;
+        }
+
         input.addEventListener('input', render);
 
         // 初始化示範內容
-        input.value = `# 國立中興大學物理筆試分析 (111-114)\n---\n## 一、力學的核心概念\n物體在等加速度 $a$ 下運動的位移公式：\n$$ \\Delta x = v_0 t + \\frac{1}{2} a t^2 $$\n\n* **牛頓第二定律**：$F = ma$\n* **功與能**：$W = \\int \\vec{F} \\cdot d\\vec{x}$`;
+        input.value = `# 國立中興大學物理筆試：歷年核心題型分析\n--\n## 一、力學 (Mechanics)\n物體在等加速度 $a$ 下運動的位移公式：\n$$ \\Delta x = v_0 t + \\frac{1}{2} a t^2 $$\n\n* **牛頓運動定律**：力圖分析、連接體問題 [cite: 380]。\n* **功與能**：$F-x$ 圖面積代表作功 [cite: 61]。`;
         render();
     </script>
 </body>
