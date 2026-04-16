@@ -3,130 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title></title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title> </title> <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
         :root { --primary: #2c3e50; --bg: #f4f7f6; }
 
-        /* 網頁顯示樣式 */
         body { 
             font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; 
-            margin: 0; 
-            display: flex; 
-            height: 100vh; 
-            background: var(--bg); 
-            overflow: hidden;
+            margin: 0; display: flex; height: 100vh; background: var(--bg); overflow: hidden;
         }
 
-        #editor-side, #preview-side { 
-            flex: 1; 
-            display: flex; 
-            flex-direction: column; 
-            padding: 20px; 
-            box-sizing: border-box; 
-        }
-
+        #editor-side, #preview-side { flex: 1; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
         #editor-side { border-right: 1px solid #ccc; background: #fff; }
-        
-        header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-bottom: 15px; 
-        }
-
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         h2 { margin: 0; font-size: 1.1rem; color: var(--primary); }
-
-        textarea { 
-            flex: 1; 
-            padding: 15px; 
-            border: 1px solid #ddd; 
-            border-radius: 8px; 
-            font-size: 15px; 
-            line-height: 1.6; 
-            outline: none; 
-            font-family: monospace; 
-        }
-
+        textarea { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; outline: none; font-family: monospace; }
+        
         #preview { 
-            flex: 1; 
-            padding: 40px; 
-            background: white; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-            overflow-y: auto; 
-            line-height: 2; 
-            font-size: 1.15rem; 
-            color: #333; 
+            flex: 1; padding: 40px; background: white; border-radius: 8px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-y: auto; 
+            line-height: 2; font-size: 1.15rem; color: #333; 
         }
 
-        button { 
-            padding: 10px 25px; 
-            background: var(--primary); 
-            color: white; 
-            border: none; 
-            border-radius: 6px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
+        button { padding: 10px 25px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 📄 專業 PDF 列印優化 (徹底移除頁首頁尾) */
+        /* 📄 專業 PDF 列印優化 (解決第二頁切斷問題) */
         @media print {
-            /* 1. 隱藏所有網頁介面 */
-            #editor-side, header, button, .no-print { 
-                display: none !important; 
-            }
+            /* 1. 隱藏編輯介面 */
+            #editor-side, header, button, .no-print { display: none !important; }
 
-            /* 2. 重置文件流 */
-            body, html { 
-                height: auto !important; 
-                overflow: visible !important; 
-                display: block !important; 
-                background: white !important; 
-            }
+            /* 2. 徹底重置頁面流 */
+            body, html { height: auto !important; overflow: visible !important; display: block !important; background: white !important; }
+            #preview-side { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
+            #preview { box-shadow: none !important; padding: 0 !important; margin: 0 !important; height: auto !important; overflow: visible !important; display: block !important; font-size: 12pt; color: black; }
 
-            #preview-side { 
-                display: block !important; 
-                width: 100% !important; 
-                padding: 0 !important; 
-                margin: 0 !important; 
-            }
-
-            #preview { 
-                box-shadow: none !important; 
-                padding: 0 !important; 
-                margin: 0 !important; 
-                height: auto !important; 
-                overflow: visible !important; 
-                display: block !important; 
-                font-size: 12pt; 
-                line-height: 1.8;
-                color: black; 
-            }
-
-            /* 3. 🔥 核心：零邊距欺騙法 */
+            /* 3. 🔥 跨頁邊距修正：確保每一頁上下都有留白 */
             @page {
-                margin: 0; /* 設為 0 會讓瀏覽器沒位置放頁首頁尾 */
+                size: A4;
+                margin: 25mm 20mm; /* 設定每一頁的物理邊距，確保不會被裁切 */
             }
 
-            body {
-                padding: 2cm 1.5cm; /* 在 body 補回邊距，確保內容不貼邊 */
-            }
-
-            /* 4. 分頁保護 */
-            h1, h2, h3 { 
-                color: black !important; 
-                page-break-after: avoid; 
-                margin-top: 1.5em;
-            }
-            p, li { 
-                page-break-inside: avoid; 
-            }
+            /* 4. 內容保護 */
+            h1, h2, h3 { color: black !important; page-break-after: avoid; margin-top: 1.5em; }
+            p, li { page-break-inside: avoid; margin-bottom: 0.8em; }
+            
+            /* 防止單行孤兒文字 */
+            p { orphans: 3; widows: 3; }
         }
     </style>
 </head>
@@ -141,7 +65,7 @@
     </div>
 
     <div id="preview-side">
-        <header class="no-print"><h2>📄 講義預覽</h2></header>
+        <header class="no-print"><h2>📄 專業預覽</h2></header>
         <div id="preview"></div>
     </div>
 
@@ -155,7 +79,7 @@
 
         function render() {
             let text = input.value;
-            // 清除標籤
+            // 洗清引用標籤
             text = text.replace(/\[cite.*?\]/g, "");
             preview.innerHTML = marked.parse(text);
 
@@ -165,17 +89,14 @@
         }
 
         function exportPDF() {
-            // 強制在列印前將 document.title 清空
-            const oldTitle = document.title;
-            document.title = ""; 
+            document.title = ""; // 確保頁首不會出現檔案路徑
             window.print();
-            document.title = oldTitle;
         }
 
         input.addEventListener('input', render);
-
-        // 初始化內容範例
-        input.value = `# 國立中興大學物理筆試分析 (111-114)\n\n## 一、力學題型總結\n物體在垂直面上做圓周運動時，在底端的速度與向心加速度關係：\n$$ a_c = \\frac{v^2}{R} $$\n\n* **牛頓定律**：力圖分析與連接體位移。\n* **能量守恆**：彈性位能與斜面高度轉換。`;
+        
+        // 預設示範
+        input.value = `# 國立中興大學物理筆試分析\n---\n## 一、力學題型總結\n物體在垂直面圓周運動：\n$$ a_c = \\frac{v^2}{R} $$\n\n* **牛頓定律**：力圖分析與連接體計算。\n* **功與能**：能量守恆應用。`;
         render();
     </script>
 </body>
