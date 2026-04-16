@@ -23,7 +23,7 @@
             background-color: var(--bg-color);
         }
 
-        /* 佈局設定 */
+        /* 介面佈局 */
         #editor-container, #preview-container {
             flex: 1;
             display: flex;
@@ -70,7 +70,7 @@
             font-size: 1.05rem;
         }
 
-        /* 按鈕設定 */
+        /* 按鈕樣式 */
         button {
             padding: 10px 20px;
             background-color: var(--primary-color);
@@ -84,7 +84,7 @@
 
         button:hover { background-color: #34495e; }
 
-        /* 列印優化 CSS */
+        /* 列印優化樣式 */
         @media print {
             body { background: white; }
             #editor-container, .no-print, header {
@@ -127,7 +127,7 @@
         const input = document.getElementById('input');
         const preview = document.getElementById('preview');
 
-        // MathJax 設定
+        // MathJax 設定：支持行內 $ $ 與 區塊 $$ $$
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
@@ -138,36 +138,35 @@
         function render() {
             let content = input.value;
             
-            // 【清洗過濾器】
-            // 1. 移除 或 [cite: 1, 2] 格式
+            // --- 核心清洗過濾邏輯 ---
+            // 1. 移除 或 [cite: 1] 格式的標籤
             content = content.replace(/\]+\]/g, "");
-            // 2. 移除 格式
+            
+            // 2. 移除 標籤
             content = content.replace(/\[cite_start\]/g, "");
+            // ------------------------
 
-            // 解析 Markdown
+            // 處理 Markdown 並渲染至預覽區
             preview.innerHTML = marked.parse(content);
 
-            // 觸發 MathJax 渲染公式
+            // 觸發 MathJax 重新解析預覽區中的公式
             if (window.MathJax && window.MathJax.typesetPromise) {
                 window.MathJax.typesetPromise([preview]).catch((err) => console.log(err));
             }
         }
 
-        // 監聽輸入
+        // 監聽文字輸入即時更新
         input.addEventListener('input', render);
 
-        // 初始測試內容
-        input.value = `# 國立中興大學物理筆試：力學分類題型
-根據歷年試題分析，力學佔比最高。
+        // 初始化測試內容
+        input.value = `# 國立中興大學物理筆試分析
+這是一個自動過濾引用標籤的範例。
 
-## 核心概念：運動學
-物體在水平面運動的位移公式：
-$$ \Delta x = v_0 t + \frac{1}{2} a t^2 $$
+## 物理公式測試
+當物體以初速 $v_0$ 運動時，其位移公式為：
+$$ \\Delta x = v_0 t + \\frac{1}{2} a t^2 $$
 
-* **直線運動**：包含 $x-t$ 圖與 $v-t$ 圖判讀。
-* **牛頓定律**：力圖分析是解題關鍵。
-
-這是一份乾淨的講義範例。`;
+即使原始文字中帶有標籤，在預覽區也會自動消失，確保講義專業清爽。`;
         render();
     </script>
 </body>
