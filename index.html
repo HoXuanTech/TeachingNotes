@@ -3,123 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 科學內容渲染器 - Iterate to Lagom</title>
+    <title>AI 科學講義渲染器 - TeachingNotes</title>
     
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <style>
-        :root {
-            --primary-color: #2c3e50;
-            --bg-color: #f8f9fa;
-        }
+        :root { --primary: #2c3e50; --bg: #f4f7f6; }
+        body { font-family: sans-serif; margin: 0; display: flex; height: 100vh; background: var(--bg); }
+        #editor-side, #preview-side { flex: 1; display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        #editor-side { border-right: 1px solid #ccc; background: #fff; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        h2 { margin: 0; font-size: 1.1rem; color: var(--primary); }
+        textarea { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; font-size: 15px; line-height: 1.6; outline: none; }
+        #preview { flex: 1; padding: 40px; background: white; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); overflow-y: auto; line-height: 1.8; font-size: 1.1rem; color: #333; }
+        button { padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        button:hover { opacity: 0.9; }
 
-        body {
-            font-family: "PingFang TC", "Microsoft JhengHei", sans-serif;
-            margin: 0;
-            display: flex;
-            height: 100vh;
-            background-color: var(--bg-color);
-        }
-
-        /* 介面佈局 */
-        #editor-container, #preview-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        #editor-container {
-            border-right: 2px solid #ddd;
-            background: #fff;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        h2 { margin: 0; color: var(--primary-color); font-size: 1.1rem; }
-
-        textarea {
-            flex: 1;
-            width: 100%;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 15px;
-            line-height: 1.5;
-            resize: none;
-            outline: none;
-        }
-
-        #preview {
-            flex: 1;
-            padding: 30px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            overflow-y: auto;
-            line-height: 1.8;
-            font-size: 1.05rem;
-        }
-
-        /* 按鈕樣式 */
-        button {
-            padding: 10px 20px;
-            background-color: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.3s;
-        }
-
-        button:hover { background-color: #34495e; }
-
-        /* 列印優化樣式 */
+        /* PDF 列印優化 */
         @media print {
+            #editor-side, header, .no-print { display: none !important; }
             body { background: white; }
-            #editor-container, .no-print, header {
-                display: none !important;
-            }
-            #preview-container {
-                width: 100%;
-                padding: 0;
-            }
-            #preview {
-                box-shadow: none;
-                border: none;
-                padding: 0;
-                overflow: visible;
-                font-size: 12pt;
-                color: black;
-            }
-            h1, h2, h3 { color: black !important; page-break-after: avoid; }
+            #preview-side { width: 100%; padding: 0; }
+            #preview { box-shadow: none; padding: 0; font-size: 12pt; }
+            h1, h2, h3 { color: black !important; }
         }
     </style>
 </head>
 <body>
 
-    <div id="editor-container">
+    <div id="editor-side">
         <header>
-            <h2>📝 內容編輯 (Markdown + LaTeX)</h2>
-            <button class="no-print" onclick="window.print()">📥 產生講義 PDF</button>
+            <h2>📝 內容編輯</h2>
+            <button onclick="window.print()">📥 產生 PDF 講義</button>
         </header>
-        <textarea id="input" placeholder="在這裡貼上 Gemini 的回答..."></textarea>
+        <textarea id="input" placeholder="直接貼上 AI 回覆的全文..."></textarea>
     </div>
 
-    <div id="preview-container">
-        <header>
-            <h2>📄 講義預覽 (自動清洗標籤)</h2>
-        </header>
+    <div id="preview-side">
+        <header><h2>📄 預覽 (已過濾標籤與亂碼)</h2></header>
         <div id="preview"></div>
     </div>
 
@@ -127,47 +50,30 @@
         const input = document.getElementById('input');
         const preview = document.getElementById('preview');
 
-        // MathJax 設定：支持行內 $ $ 與 區塊 $$ $$
         window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            }
+            tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] }
         };
 
         function render() {
-            let content = input.value;
+            let text = input.value;
             
-            // --- 核心清洗過濾邏輯 ---
-            // 1. 移除 或 [cite: 1] 格式的標籤
-            content = content.replace(/\]+\]/g, "");
-            
-            // 2. 移除 標籤
-            content = content.replace(/\[cite_start\]/g, "");
-            // ------------------------
+            // 【最強過濾邏輯】只要括號內包含 cite 字眼，整組標籤刪除
+            // 處理 或 
+            text = text.replace(/\[cite.*?\]/g, "");
 
-            // 處理 Markdown 並渲染至預覽區
-            preview.innerHTML = marked.parse(content);
+            // 渲染 Markdown
+            preview.innerHTML = marked.parse(text);
 
-            // 觸發 MathJax 重新解析預覽區中的公式
+            // 重新渲染 LaTeX 公式
             if (window.MathJax && window.MathJax.typesetPromise) {
-                window.MathJax.typesetPromise([preview]).catch((err) => console.log(err));
+                window.MathJax.typesetPromise([preview]);
             }
         }
 
-        
-        // 監聽文字輸入即時更新
         input.addEventListener('input', render);
 
-        // 初始化測試內容
-        input.value = `# 國立中興大學物理筆試分析
-這是一個自動過濾引用標籤的範例。
-
-## 物理公式測試
-當物體以初速 $v_0$ 運動時，其位移公式為：
-$$ \\Delta x = v_0 t + \\frac{1}{2} a t^2 $$
-
-即使原始文字中帶有標籤，在預覽區也會自動消失，確保講義專業清爽。`;
+        // 初始化範例
+        input.value = `# 中興大學物理題型總結\n當物體受力為 $F$ 時，加速度 $a$ 與質量 $m$ 的關係：\n$$ F = ma $$\n* 直線運動：包含 $x-t$ 圖判讀。`;
         render();
     </script>
 </body>
