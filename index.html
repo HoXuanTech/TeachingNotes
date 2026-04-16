@@ -126,8 +126,30 @@
         };
 
         function render() {
-            const rawValue = input.value;
+            let rawValue = input.value; // 將 const 改為 let 才能進行後續清洗
+        
+        // --- 過濾器：自動移除 與 ---
+        rawValue = rawValue.replace(/\]+\]/g, "");
+        rawValue = rawValue.replace(/\[cite_start\]/g, "");
+        // ----------------------------------------------
+            function render() {
+            let rawValue = input.value;
             
+            // 【核心修正：過濾引用標籤】
+            // 這行會移除 [cite: 123] 這種格式
+            rawValue = rawValue.replace(/\]+\]/g, "");
+            // 這行會移除 這種格式
+            rawValue = rawValue.replace(/\[cite_start\]/g, "");
+
+            // 1. 處理 Markdown (使用清洗過後的 rawValue)
+            const html = marked.parse(rawValue);
+            preview.innerHTML = html;
+
+            // 2. 觸發 MathJax 重新渲染公式
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([preview]).catch((err) => console.log(err));
+            }
+        }
             // 1. 處理 Markdown
             const html = marked.parse(rawValue);
             preview.innerHTML = html;
