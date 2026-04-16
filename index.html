@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>物理科教學講義</title>
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title> </title> <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
@@ -32,28 +30,52 @@
 
         button { padding: 10px 25px; background: var(--primary); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* 📄 專業 PDF 列印優化 (三重鎖定移除頁首頁尾) */
+        /* 📄 專業 PDF 列印優化 (解決跨頁切斷與頁首頁尾) */
         @media print {
-            /* 1. 隱藏所有非講義介面 */
+            /* 1. 隱藏編輯器 */
             #editor-side, header, button, .no-print { display: none !important; }
 
-            /* 2. 強制重置文件流 */
-            body, html { height: auto !important; overflow: visible !important; display: block !important; background: white !important; }
-            #preview-side { display: block !important; width: 100% !important; padding: 0 !important; margin: 0 !important; }
-            #preview { box-shadow: none !important; padding: 0 !important; margin: 0 !important; height: auto !important; overflow: visible !important; display: block !important; font-size: 12pt; color: black; }
+            /* 2. 強制解除 Flex 佈局，回歸標準流 */
+            body, html { 
+                height: auto !important; 
+                overflow: visible !important; 
+                display: block !important; 
+                background: white !important; 
+            }
 
-            /* 3. 🔥 關鍵：零邊距指令，逼迫瀏覽器隱藏頁首頁尾 */
+            #preview-side { 
+                display: block !important; 
+                width: 100% !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+            }
+
+            #preview { 
+                box-shadow: none !important; 
+                padding: 0 !important; 
+                margin: 0 !important; 
+                height: auto !important; 
+                overflow: visible !important; 
+                display: block !important; 
+                font-size: 12pt; 
+                color: black; 
+                line-height: 1.7;
+            }
+
+            /* 3. 🔥 跨頁邊距控制：這是解決第二頁太近的關鍵 */
             @page {
                 size: A4 portrait;
-                margin: 0; /* 這裡設為 0 會讓頁首頁尾沒位置顯示 */
+                margin: 25mm 20mm 20mm 20mm; /* 頂部留 2.5 公分，四周留 2 公分 */
             }
 
-            body {
-                padding: 25mm 20mm; /* 把講義的邊距補在 body，確保每一頁內容都漂亮 */
+            /* 4. 分頁安全：確保標題不會被切一半 */
+            h1, h2, h3 { 
+                page-break-after: avoid; 
+                margin-top: 2em; 
+                border-bottom: 1px solid #eee;
+                padding-bottom: 5px;
             }
-
-            h1, h2, h3 { color: black !important; page-break-after: avoid; margin-top: 1.5em; }
-            p, li { page-break-inside: avoid; margin-bottom: 0.8em; }
+            p, li { page-break-inside: avoid; margin-bottom: 10px; }
         }
     </style>
 </head>
@@ -62,13 +84,13 @@
     <div id="editor-side">
         <header>
             <h2>📝 內容編輯</h2>
-            <button onclick="exportPDF()">📥 下載專業講義 PDF</button>
+            <button onclick="safePrint()">📥 下載專業講義 PDF</button>
         </header>
-        <textarea id="input" placeholder="貼上內容..."></textarea>
+        <textarea id="input" placeholder="貼上 Gemini 的回覆..."></textarea>
     </div>
 
     <div id="preview-side">
-        <header class="no-print"><h2>📄 專業預覽</h2></header>
+        <header class="no-print"><h2>📄 講義預覽</h2></header>
         <div id="preview"></div>
     </div>
 
@@ -82,7 +104,7 @@
 
         function render() {
             let text = input.value;
-            // 洗清 AI 的引用標籤
+            // 暴力清洗所有引用標籤
             text = text.replace(/\[cite.*?\]/g, "");
             preview.innerHTML = marked.parse(text);
 
@@ -91,19 +113,18 @@
             }
         }
 
-        function exportPDF() {
-            // 在列印前徹底清空網頁標題
+        function safePrint() {
+            // 列印瞬間清空標題，防止頁頭出現網址或檔名
             const originalTitle = document.title;
             document.title = ""; 
             window.print();
-            // 列印完畢後再恢復（如果需要的話）
             document.title = originalTitle;
         }
 
         input.addEventListener('input', render);
         
-        // 初始內容範例
-        input.value = `# 國立中興大學物理筆試分析 (111-114)\n---\n## 一、力學題型總結\n物體在垂直面圓周運動：\n$$ a_c = \\frac{v^2}{R} $$\n\n* **牛頓定律**：力圖分析與連接體計算。\n* **功與能**：能量守恆應用。`;
+        // 初始化範例
+        input.value = `# 物理筆試分析\n---\n## 一、力學題型分析\n物體受力為 $F$, 質量 $m$, 加速度 $a$：\n$$ F = ma $$\n* 直線運動圖形：$v-t$ 圖與 $x-t$ 圖判讀。`;
         render();
     </script>
 </body>
